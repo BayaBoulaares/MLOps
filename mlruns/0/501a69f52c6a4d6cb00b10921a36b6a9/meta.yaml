@@ -1,0 +1,14 @@
+artifact_uri: file:///home/baya/MLOps_Flask_Recommendation_System/mlruns/0/501a69f52c6a4d6cb00b10921a36b6a9/artifacts
+end_time: 1756381535186
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 501a69f52c6a4d6cb00b10921a36b6a9
+run_name: resilient-crane-555
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1756381535170
+status: 3
+tags: []
+user_id: baya

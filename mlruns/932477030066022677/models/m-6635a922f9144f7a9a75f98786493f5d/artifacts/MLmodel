@@ -1,0 +1,22 @@
+artifact_path: file:///home/baya/MLOps_Flask_Recommendation_System/mlruns/932477030066022677/models/m-6635a922f9144f7a9a75f98786493f5d/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.10.12
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.7.1
+mlflow_version: 3.3.2
+model_id: m-6635a922f9144f7a9a75f98786493f5d
+model_size_bytes: 731117
+model_uuid: m-6635a922f9144f7a9a75f98786493f5d
+prompts: null
+run_id: 4fa64a8f40564fa596162f187796d787
+utc_time_created: '2025-08-28 17:08:47.261607'

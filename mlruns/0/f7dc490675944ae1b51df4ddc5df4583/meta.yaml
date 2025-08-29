@@ -1,0 +1,14 @@
+artifact_uri: file:///home/baya/MLOps_Flask_Recommendation_System/mlruns/0/f7dc490675944ae1b51df4ddc5df4583/artifacts
+end_time: 1756379953465
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f7dc490675944ae1b51df4ddc5df4583
+run_name: bouncy-doe-316
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1756379953447
+status: 3
+tags: []
+user_id: baya

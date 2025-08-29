@@ -1,0 +1,14 @@
+artifact_uri: file:///home/baya/MLOps_Flask_Recommendation_System/mlruns/275527383729948404/8c8e7e0db2c64ac383a0685cdcbdd794/artifacts
+end_time: 1756381500506
+entry_point_name: ''
+experiment_id: '275527383729948404'
+lifecycle_stage: active
+run_id: 8c8e7e0db2c64ac383a0685cdcbdd794
+run_name: marvelous-skink-834
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1756381500334
+status: 4
+tags: []
+user_id: baya

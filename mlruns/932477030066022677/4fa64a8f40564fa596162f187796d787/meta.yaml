@@ -1,0 +1,14 @@
+artifact_uri: file:///home/baya/MLOps_Flask_Recommendation_System/mlruns/932477030066022677/4fa64a8f40564fa596162f187796d787/artifacts
+end_time: 1756400929343
+entry_point_name: ''
+experiment_id: '932477030066022677'
+lifecycle_stage: active
+run_id: 4fa64a8f40564fa596162f187796d787
+run_name: bustling-chimp-743
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1756400927200
+status: 3
+tags: []
+user_id: baya

@@ -1,0 +1,14 @@
+artifact_uri: file:///home/baya/MLOps_Flask_Recommendation_System/mlruns/275527383729948404/9bd37feb96054fe98ba1507676126c68/artifacts
+end_time: 1756401144561
+entry_point_name: ''
+experiment_id: '275527383729948404'
+lifecycle_stage: active
+run_id: 9bd37feb96054fe98ba1507676126c68
+run_name: unequaled-hawk-709
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1756401142881
+status: 3
+tags: []
+user_id: baya

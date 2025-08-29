@@ -1,0 +1,10 @@
+artifact_location: file:///home/baya/MLOps_Flask_Recommendation_System/mlruns/932477030066022677/models/m-6635a922f9144f7a9a75f98786493f5d/artifacts
+creation_timestamp: 1756400927255
+experiment_id: '932477030066022677'
+last_updated_timestamp: 1756400929341
+model_id: m-6635a922f9144f7a9a75f98786493f5d
+model_type: null
+name: svd_model
+source_run_id: 4fa64a8f40564fa596162f187796d787
+status: 2
+status_message: null

@@ -1,0 +1,6 @@
+artifact_location: file:///home/baya/MLOps_Flask_Recommendation_System/mlruns/275527383729948404
+creation_time: 1756381340696
+experiment_id: '275527383729948404'
+last_update_time: 1756381340696
+lifecycle_stage: active
+name: SVD_Recommendation_GridSearch
