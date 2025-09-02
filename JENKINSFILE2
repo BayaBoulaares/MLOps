@@ -1,0 +1,31 @@
+pipeline {
+    agent any   // Exécute le pipeline sur n'importe quel agent disponible (machine Jenkins slave/agent)
+
+    stages {
+        stage('Build') {   // Étape nommée "Build"
+            steps {
+                // Exécute une commande shell sur Ubuntu/Linux
+                sh 'python3 -V'   // Vérifie la version de Python 3 (sur Ubuntu c'est 'python3', pas 'python')
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'ALWAYS'   // S'exécute TOUJOURS (peu importe succès, échec, instable)
+        }
+        success {
+            echo 'ONLY ON SUCCESS'   // S'exécute uniquement si le pipeline réussit
+        }
+        failure {
+            echo 'ONLY ON FAILURE'   // S'exécute uniquement si le pipeline échoue
+        }
+        unstable {
+            echo 'ONLY IF RUN IS UNSTABLE'   // S'exécute uniquement si le pipeline est marqué comme instable (ex: tests partiellement échoués)
+        }
+        changed {
+            echo 'ONLY IF STATUS CHANGED FROM SUCCESS TO FAILURE OR VICE VERSA'  
+            // S'exécute uniquement si le statut change par rapport au build précédent
+        }
+    }
+}
