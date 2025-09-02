@@ -1,0 +1,39 @@
+pipeline {
+    agent any   // Le pipeline s'exécute sur n'importe quel agent disponible (Ubuntu, Linux ou autre)
+
+    stages {    // Bloc qui contient toutes les étapes (stages)
+
+        stage('stage1') {
+            steps {
+                // Affiche un message dans la console Jenkins
+                echo 'stage 1'
+            }
+        }
+
+        stage('stage2') {
+            steps {
+                echo 'stage 2'
+            }
+        }
+
+        stage('stage3') {
+            steps {
+                echo 'stage 3'
+            }
+        }
+
+        stage('stage4') {
+            steps {
+                echo 'stage 4'
+            }
+        }
+    }
+
+    post {
+        always {
+            // Cette étape s'exécute toujours à la fin du pipeline,
+            // que ce soit en succès, échec ou instable
+            echo 'Always'
+        }
+    }
+}
