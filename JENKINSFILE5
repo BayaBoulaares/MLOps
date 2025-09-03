@@ -1,0 +1,48 @@
+pipeline {
+    agent any   // Le pipeline peut s'exécuter sur n'importe quel agent Jenkins (Ubuntu, Linux, etc.)
+
+    stages {    // Définition des étapes du pipeline
+
+        stage('stage1') {
+            steps {
+                // Affiche un message dans la console Jenkins
+                echo 'stage 1'
+            }
+        }
+
+        stage('stage2') {
+            steps {
+                echo 'stage 2'
+            }
+        }
+
+        stage('stage3') {
+            steps {
+                echo 'stage 3'
+            }
+        }
+
+        stage('stage4') {
+            steps {
+                script {
+                    // Exécution parallèle de plusieurs branches
+                    parallel(
+                        firefox: {
+                            echo 'Running on firefox'
+                        },
+                        chrome: {
+                            echo 'Running on chrome'
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // S'exécute toujours à la fin, quel que soit le résultat du pipeline
+            echo 'Always'
+        }
+    }
+}
