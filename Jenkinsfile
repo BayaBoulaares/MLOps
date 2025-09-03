@@ -3,8 +3,8 @@ pipeline {
 
   environment {
     APP_NAME = "mlops-flask-app"
-    DOCKERHUB_USER = credentials('dockerhub-username')
-    DOCKERHUB_PASS = credentials('dockerhub-password')
+    DOCKERHUB_USER = credentials('dockerhub-username')   // Jenkins Credential ID
+    DOCKERHUB_PASS = credentials('dockerhub-password')   // Jenkins Credential ID
     DOCKER_IMAGE = "${DOCKERHUB_USER_USR}/${APP_NAME}:latest"
   }
 
@@ -68,6 +68,8 @@ pipeline {
       steps {
         sh '''
           echo "Skipping real remote deploy, sample only."
+          # scp -r * user@server:/opt/app
+          # ssh user@server "cd /opt/app && docker compose pull && docker compose up -d --force-recreate"
         '''
       }
     }
