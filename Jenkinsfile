@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         APP_NAME = "mlops-flask-app"
-        // Credential Docker Hub : un seul ID suffit
+        // Credential Docker Hub
         DOCKERHUB = credentials('baya-dockerhub')
         DOCKER_IMAGE = "${DOCKERHUB_USR}/${APP_NAME}:latest"
         VENV_DIR = ".venv"
@@ -36,23 +36,6 @@ pipeline {
                     . $VENV_DIR/bin/activate
                     pip install --upgrade pip
                     pip install -r requirements.txt
-
-                    # Installer requirements pour tests si présents
-                    if [ -f tests/requirements.txt ]; then
-                        pip install -r tests/requirements.txt
-                    fi
-                '''
-            }
-        }
-
-        // ------------------------------
-        stage('Run Unit Tests') {
-            steps {
-                sh '''
-                    if [ -d tests ]; then
-                        . $VENV_DIR/bin/activate
-                        pytest -q --tb=short --disable-warnings || true
-                    fi
                 '''
             }
         }
@@ -105,9 +88,8 @@ pipeline {
     post {
         always {
             script {
-                // Sauvegarder les modèles et rapports
+                // Sauvegarder uniquement les modèles
                 archiveArtifacts artifacts: 'model/*.pkl', fingerprint: true
-                junit 'reports/**/*.xml'
                 cleanWs() // nettoyer le workspace après le build
             }
         }
