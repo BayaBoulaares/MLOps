@@ -6,87 +6,116 @@ pipeline {
         // Credential Docker Hub : un seul ID suffit
         DOCKERHUB = credentials('baya-dockerhub')
         DOCKER_IMAGE = "${DOCKERHUB_USR}/${APP_NAME}:latest"
+        VENV_DIR = ".venv"
     }
 
     triggers {
-        githubPush()
+        githubPush() // déclenche le pipeline à chaque push GitHub
     }
 
     options {
         timestamps()
-        // ansiColor nécessite le plugin "AnsiColor" installé dans Jenkins
-        // si non installé, commentez la ligne suivante
-        ansiColor('xterm')
+        ansiColor('xterm') // colorisation des logs
+        skipDefaultCheckout() // on fera checkout manuellement
     }
 
     stages {
-        stage('Checkout') {
+        // ------------------------------
+        stage('Checkout Code') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Set up Python') {
+        // ------------------------------
+        stage('Setup Python & Install Dependencies') {
             steps {
                 sh '''
-                    python3 -m venv .venv
-                    . .venv/bin/activate
+                    # Création de l'environnement virtuel
+                    python3 -m venv $VENV_DIR
+                    . $VENV_DIR/bin/activate
                     pip install --upgrade pip
                     pip install -r requirements.txt
-                    # Installer requirements pour tests si présent
-                    if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
-                    # Lancer tests si le dossier tests existe
-                    if [ -d tests ]; then pytest -q || true; fi
+
+                    # Installer requirements pour tests si présents
+                    if [ -f tests/requirements.txt ]; then
+                        pip install -r tests/requirements.txt
+                    fi
                 '''
             }
         }
 
-        stage('Train & Log (MLflow)') {
+        // ------------------------------
+        stage('Run Unit Tests') {
             steps {
                 sh '''
-                    . .venv/bin/activate
+                    if [ -d tests ]; then
+                        . $VENV_DIR/bin/activate
+                        pytest -q --tb=short --disable-warnings || true
+                    fi
+                '''
+            }
+        }
+
+        // ------------------------------
+        stage('Train Model & Log with MLflow') {
+            steps {
+                sh '''
+                    . $VENV_DIR/bin/activate
                     python3 model_training.py
                 '''
             }
         }
 
+        // ------------------------------
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${APP_NAME} .'
+                sh '''
+                    docker build -t $APP_NAME .
+                '''
             }
         }
 
-        stage('Login & Push Docker Image') {
+        // ------------------------------
+        stage('Push Docker Image') {
             steps {
                 sh '''
                     echo "$DOCKERHUB_PSW" | docker login -u "$DOCKERHUB_USR" --password-stdin
-                    docker tag ${APP_NAME} ${DOCKER_IMAGE}
-                    docker push ${DOCKER_IMAGE}
+                    docker tag $APP_NAME $DOCKER_IMAGE
+                    docker push $DOCKER_IMAGE
                     docker logout
                 '''
             }
         }
 
+        // ------------------------------
         stage('Deploy (Docker Compose)') {
             when { expression { return fileExists('docker-compose.yml') } }
             steps {
                 sh '''
-                    echo "Skipping real remote deploy, sample only."
-                    # Exemple de commande si serveur distant :
-                    # scp -r * user@server:/opt/app
-                    # ssh user@server "cd /opt/app && docker compose pull && docker compose up -d --force-recreate"
+                    echo "Deploying via Docker Compose..."
+                    docker compose pull
+                    docker compose up -d --force-recreate
                 '''
             }
         }
     }
 
+    // ------------------------------
     post {
         always {
             script {
+                // Sauvegarder les modèles et rapports
                 archiveArtifacts artifacts: 'model/*.pkl', fingerprint: true
-                junit 'reports/**/*.xml' // si vous avez des rapports de tests JUnit
-                cleanWs()
+                junit 'reports/**/*.xml'
+                cleanWs() // nettoyer le workspace après le build
             }
+        }
+        success {
+            echo "✅ Pipeline completed successfully!"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
         }
     }
 }
