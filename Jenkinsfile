@@ -3,8 +3,8 @@ pipeline {
 
   environment {
     APP_NAME = "mlops-flask-app"
-    DOCKERHUB_USER = credentials('dockerhub-username')
-    DOCKERHUB_PASS = credentials('dockerhub-password')
+    DOCKERHUB_USER = credentials('dockerhub-username')  // Jenkins Credential ID
+    DOCKERHUB_PASS = credentials('dockerhub-password')  // Jenkins Credential ID
     DOCKER_IMAGE = "${DOCKERHUB_USER_USR}/${APP_NAME}:latest"
   }
 
@@ -63,7 +63,7 @@ pipeline {
       steps {
         wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
           sh '''
-            echo "${DOCKERHUB_PASS_PSW}" | docker login -u "${DOCKERHUB_PASS_USR}" --password-stdin
+            echo "${DOCKERHUB_PASS_PSW}" | docker login -u "${DOCKERHUB_USER_USR}" --password-stdin
             docker tag ${APP_NAME} ${DOCKER_IMAGE}
             docker push ${DOCKER_IMAGE}
             docker logout
@@ -88,9 +88,13 @@ pipeline {
 
   post {
     always {
-      archiveArtifacts artifacts: 'model/*.pkl', fingerprint: true
-      junit 'reports/**/*.xml'
-      cleanWs()
+      script {
+        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+          archiveArtifacts artifacts: 'model/*.pkl', fingerprint: true
+          junit 'reports/**/*.xml'
+          cleanWs()
+        }
+      }
     }
   }
 }
