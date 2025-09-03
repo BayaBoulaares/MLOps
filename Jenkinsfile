@@ -1,20 +1,32 @@
 pipeline {
   agent any
+
   environment {
-    DOCKERHUB_CREDENTIALS = credentials('dockerhub-username') // ID du credential Jenkins
     APP_NAME = "mlops-flask-app"
-    DOCKER_IMAGE = "${DOCKERHUB_CREDENTIALS_USR}/${APP_NAME}:latest"
+    // Ici, on récupère le credential Jenkins (username/password)
+    DOCKERHUB = credentials('dockerhub-username') 
+    // DOCKERHUB_USR et DOCKERHUB_PSW sont automatiquement disponibles
+    DOCKER_IMAGE = "${DOCKERHUB_USR}/${APP_NAME}:latest"
   }
 
   stages {
-    stage('Login & Push Docker Image') {
+    stage('Login, Build & Push Docker Image') {
       steps {
-        sh '''
-          echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
-          docker build -t ${DOCKER_IMAGE} .
-          docker push ${DOCKER_IMAGE}
-          docker logout
-        '''
+        script {
+          sh '''
+            # Connexion à Docker Hub
+            echo "$DOCKERHUB_PSW" | docker login -u "$DOCKERHUB_USR" --password-stdin
+
+            # Build de l'image
+            docker build -t ${DOCKER_IMAGE} .
+
+            # Push de l'image
+            docker push ${DOCKER_IMAGE}
+
+            # Déconnexion
+            docker logout
+          '''
+        }
       }
     }
   }
