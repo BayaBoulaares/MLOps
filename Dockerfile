@@ -1,94 +1,27 @@
-pipeline {
-    agent any
+# Use an official Python runtime as a parent image
+FROM python:3.10-slim
 
-    environment {
-        APP_NAME = "mlops-flask-app"
-        DOCKERHUB_CRED = credentials('baya-dockerhub') // Jenkins Credential ID contenant user/password
-        DOCKER_IMAGE = "${DOCKERHUB_CRED_USR}/${APP_NAME}:latest"
-    }
+# Set the working directory in the container
+WORKDIR /app
 
-    triggers {
-        githubPush()
-    }
+# Install build dependencies and Python dev tools
+RUN apt-get update && apt-get install -y \
+    gcc \
+    build-essential \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-    options {
-        timestamps()
-        ansiColor('xterm')
-    }
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-        stage('Set up Python') {
-            steps {
-                sh '''
-                    python3 -m venv .venv
-                    . .venv/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
-                    # Installer requirements pour tests si présent
-                    if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
-                    # Lancer tests si le dossier tests existe
-                    if [ -d tests ]; then pytest -q || true; fi
-                '''
-            }
-        }
+# Expose port 5000 to the outside world
+EXPOSE 5000
 
-        stage('Train & Log (MLflow)') {
-            steps {
-                sh '''
-                    . .venv/bin/activate
-                    python3 model_training.py
-                '''
-            }
-        }
+# Define environment variable
+ENV FLASK_APP=app.py
 
-        stage('Build Docker Image') {
-            steps {
-                // Vérifier que le Dockerfile existe avant build
-                sh '''
-                    if [ ! -f Dockerfile ]; then
-                        echo "ERROR: Dockerfile not found!"
-                        exit 1
-                    fi
-                    docker build -t ${APP_NAME} .
-                '''
-            }
-        }
-
-        stage('Login & Push Docker Image') {
-            steps {
-                sh '''
-                    echo "$DOCKERHUB_CRED_PSW" | docker login -u "$DOCKERHUB_CRED_USR" --password-stdin
-                    docker tag ${APP_NAME} ${DOCKER_IMAGE}
-                    docker push ${DOCKER_IMAGE}
-                    docker logout
-                '''
-            }
-        }
-
-        stage('Deploy (Docker Compose)') {
-            when { expression { return fileExists('docker-compose.yml') } }
-            steps {
-                sh '''
-                    echo "Skipping real remote deploy, sample only."
-                    # Exemple de commande si serveur distant :
-                    # scp -r * user@server:/opt/app
-                    # ssh user@server "cd /opt/app && docker compose pull && docker compose up -d --force-recreate"
-                '''
-            }
-        }
-    }
-
-    post {
-        always {
-            archiveArtifacts artifacts: 'model/*.pkl', fingerprint: true
-            junit allowEmptyResults: true, testResults: 'reports/**/*.xml'
-            cleanWs()
-        }
-    }
-}
+# Run the application
+CMD ["flask", "run", "--host=0.0.0.0"]
