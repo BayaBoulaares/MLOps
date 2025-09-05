@@ -1,27 +1,100 @@
-# Use an official Python runtime as a parent image
-FROM python:3.10-slim
+pipeline {
+  agent any
 
-# Set the working directory in the container
-WORKDIR /app
+  environment {
+    APP_NAME = "mlops-flask-app"
+    DOCKERHUB_USER = credentials('dockerhub-username')  // Jenkins Credential ID
+    DOCKERHUB_PASS = credentials('dockerhub-password')  // Jenkins Credential ID
+    DOCKER_IMAGE = "${DOCKERHUB_USER_USR}/${APP_NAME}:latest"
+  }
 
-# Install build dependencies and Python dev tools
-RUN apt-get update && apt-get install -y \
-    gcc \
-    build-essential \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
+  triggers {
+    githubPush()
+  }
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+  options {
+    timestamps()
+  }
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+  stages {
+    stage('Checkout') {
+      steps {
+        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+          checkout scm
+        }
+      }
+    }
 
-# Expose port 5000 to the outside world
-EXPOSE 5000
+    stage('Set up Python') {
+      steps {
+        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+          sh '''
+            python3 -m venv .venv
+            . .venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
+            if [ -d tests ]; then pytest -q || true; fi
+          '''
+        }
+      }
+    }
 
-# Define environment variable
-ENV FLASK_APP=app.py
+    stage('Train & Log (MLflow)') {
+      steps {
+        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+          sh '''
+            . .venv/bin/activate
+            python3 model_training.py
+          '''
+        }
+      }
+    }
 
-# Run the application
-CMD ["flask", "run", "--host=0.0.0.0"]
+    stage('Build Docker Image') {
+      steps {
+        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+          sh 'docker build -t ${APP_NAME} .'
+        }
+      }
+    }
+
+    stage('Login & Push Docker Image') {
+      steps {
+        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+          sh '''
+            echo "${DOCKERHUB_PASS_PSW}" | docker login -u "${DOCKERHUB_USER_USR}" --password-stdin
+            docker tag ${APP_NAME} ${DOCKER_IMAGE}
+            docker push ${DOCKER_IMAGE}
+            docker logout
+          '''
+        }
+      }
+    }
+
+    stage('Deploy (Docker Compose)') {
+      when { expression { return fileExists('docker-compose.yml') } }
+      steps {
+        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+          sh '''
+            echo "Skipping real remote deploy, sample only."
+            # scp -r * user@server:/opt/app
+            # ssh user@server "cd /opt/app && docker compose pull && docker compose up -d --force-recreate"
+          '''
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      script {
+        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+          archiveArtifacts artifacts: 'model/*.pkl', fingerprint: true
+          junit 'reports/**/*.xml'
+          cleanWs()
+        }
+      }
+    }
+  }
+}
