@@ -3,9 +3,8 @@ pipeline {
 
     environment {
         APP_NAME = "mlops-flask-app"
-        // Credential Docker Hub : un seul ID suffit
-        DOCKERHUB = credentials('baya-dockerhub')
-        DOCKER_IMAGE = "${DOCKERHUB_USR}/${APP_NAME}:latest"
+        DOCKERHUB_CRED = credentials('baya-dockerhub') // Jenkins Credential ID contenant user/password
+        DOCKER_IMAGE = "${DOCKERHUB_CRED_USR}/${APP_NAME}:latest"
     }
 
     triggers {
@@ -14,8 +13,6 @@ pipeline {
 
     options {
         timestamps()
-        // ansiColor nécessite le plugin "AnsiColor" installé dans Jenkins
-        // si non installé, commentez la ligne suivante
         ansiColor('xterm')
     }
 
@@ -52,14 +49,21 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${APP_NAME} .'
+                // Vérifier que le Dockerfile existe avant build
+                sh '''
+                    if [ ! -f Dockerfile ]; then
+                        echo "ERROR: Dockerfile not found!"
+                        exit 1
+                    fi
+                    docker build -t ${APP_NAME} .
+                '''
             }
         }
 
         stage('Login & Push Docker Image') {
             steps {
                 sh '''
-                    echo "$DOCKERHUB_PSW" | docker login -u "$DOCKERHUB_USR" --password-stdin
+                    echo "$DOCKERHUB_CRED_PSW" | docker login -u "$DOCKERHUB_CRED_USR" --password-stdin
                     docker tag ${APP_NAME} ${DOCKER_IMAGE}
                     docker push ${DOCKER_IMAGE}
                     docker logout
@@ -82,11 +86,9 @@ pipeline {
 
     post {
         always {
-            script {
-                archiveArtifacts artifacts: 'model/*.pkl', fingerprint: true
-                junit 'reports/**/*.xml' // si vous avez des rapports de tests JUnit
-                cleanWs()
-            }
+            archiveArtifacts artifacts: 'model/*.pkl', fingerprint: true
+            junit allowEmptyResults: true, testResults: 'reports/**/*.xml'
+            cleanWs()
         }
     }
 }
