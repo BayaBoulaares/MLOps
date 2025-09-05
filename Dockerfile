@@ -1,27 +1,47 @@
-# Use an official Python runtime as a parent image
-FROM python:3.10-slim
+# =============================
+# STAGE 1 : build des dépendances
+# =============================
+FROM python:3.10-slim AS builder
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Install build dependencies and Python dev tools
-RUN apt-get update && apt-get install -y \
-    gcc \
+# Installer outils système minimaux pour build
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    python3-dev \
+    gcc \
+    g++ \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Copier uniquement requirements pour profiter du cache Docker
+COPY requirements.txt .
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Installer les dépendances dans un dossier temporaire
+RUN pip install --upgrade pip \
+    && pip wheel --no-cache-dir --no-deps -r requirements.txt -w /wheels
 
-# Expose port 5000 to the outside world
+
+# =============================
+# STAGE 2 : image finale
+# =============================
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Installer juste ce qui est nécessaire pour exécuter
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copier les wheels déjà construits
+COPY --from=builder /wheels /wheels
+RUN pip install --no-cache-dir /wheels/*
+
+# Copier le code source
+COPY . .
+
 EXPOSE 5000
 
-# Define environment variable
-ENV FLASK_APP=app.py
+# Démarrage de ton app Flask
+CMD ["python", "app.py"]
 
-# Run the application
-CMD ["flask", "run", "--host=0.0.0.0"]

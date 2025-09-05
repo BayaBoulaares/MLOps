@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request
+from prometheus_flask_exporter import PrometheusMetrics
 import pickle
 import os
 
 # Initialize Flask app
 app = Flask(__name__)
-
+metrics = PrometheusMetrics(app)             # /metrics exposé automatiquement
+metrics.info('app_info', 'ML Reco App', version='1.0.0')
 # Load the saved SVD model
 model_path = os.path.join('model', 'svd_model.pkl')
 with open(model_path, 'rb') as model_file:
